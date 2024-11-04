@@ -235,6 +235,16 @@
             margin: 10px 0;
             padding: 8px;
         }
+        .card h3 a {
+        color: #4a90e2; /* Change this color to your desired color */
+        text-decoration: none; /* Removes the underline */
+        }
+
+        .card h3 a:hover {
+        color: #357abd; /* Change color on hover for better interaction */
+        text-decoration: underline; /* Optional: adds underline on hover */
+        }
+
     </style>
 </head>
 <body>
@@ -334,12 +344,12 @@
                 <h2 class="section-title">Your Playlists</h2>
                 <button class="btn" onclick="showCreatePlaylistModal()">Create New Playlist</button>
             </div>
-
+        
             <div class="grid">
                 {% if playlists %}
                     {% for playlist in playlists %}
                     <div class="card">
-                        <h3>{{ playlist['name'] }}</h3>
+                        <h3><a href="{{ url_for('view_playlist', playlist_id=playlist.id) }}">{{ playlist['name'] }}</a></h3>
                         <p>{{ playlist['description'] }}</p>
                     </div>
                     {% endfor %}
@@ -348,6 +358,8 @@
                 {% endif %}
             </div>
         </div>
+        
+        
     </div>
 
     <!-- Add to Playlist Modal -->

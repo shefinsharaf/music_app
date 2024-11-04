@@ -265,6 +265,79 @@ def add_to_playlist():
     
     return redirect(url_for('home'))
 
+## code for songs view inside playlist and remove songs 
+
+@app.route('/playlist/<int:playlist_id>')
+def view_playlist(playlist_id):
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # Get playlist details
+    cursor.execute("SELECT name, description FROM playlists WHERE id = ?", (playlist_id,))
+    playlist = cursor.fetchone()
+    
+    # Get songs in the playlist
+    cursor.execute("""
+        SELECT music.id, music.title, music.artist, music.genre 
+        FROM music 
+        JOIN playlist_songs ON music.id = playlist_songs.music_id 
+        WHERE playlist_songs.playlist_id = ?
+    """, (playlist_id,))
+    songs = cursor.fetchall()
+    
+    conn.close()
+
+    if playlist:
+        return render_template('select_playlist.html', 
+                               playlist_id=playlist_id,  # Pass playlist_id here
+                               playlist_name=playlist['name'],
+                               playlist_description=playlist['description'],
+                               songs=songs)
+    else:
+        flash('Playlist not found', 'error')
+        return redirect(url_for('home'))
+
+
+@app.route('/remove_song_from_playlist', methods=['POST'])
+def remove_song_from_playlist():
+    song_id = request.form.get('song_id')
+    playlist_id = request.form.get('playlist_id')
+
+    if not song_id or not playlist_id:
+        flash('Missing song or playlist ID.', 'error')
+        return redirect(url_for('home'))
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # Remove the song from the playlist
+    cursor.execute("DELETE FROM playlist_songs WHERE music_id = ? AND playlist_id = ?", (song_id, playlist_id))
+    conn.commit()
+    conn.close()
+
+    flash('Song removed from the playlist.', 'success')
+    return redirect(url_for('view_playlist', playlist_id=playlist_id))
+
+
+@app.route('/delete_playlist/<int:playlist_id>', methods=['POST'])
+def delete_playlist(playlist_id):
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # Delete songs from the playlist first
+    cursor.execute("DELETE FROM playlist_songs WHERE playlist_id = ?", (playlist_id,))
+    
+    # Now delete the playlist
+    cursor.execute("DELETE FROM playlists WHERE id = ?", (playlist_id,))
+    conn.commit()
+    conn.close()
+
+    flash('Playlist deleted successfully.', 'success')
+    return redirect(url_for('home'))  # Redirect to home or wherever you want
+
+
+
+
 @app.route('/play/<int:music_id>')
 def play_music(music_id):
     if 'user_id' not in session:
